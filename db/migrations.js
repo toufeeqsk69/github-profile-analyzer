@@ -13,6 +13,8 @@ const initializeDatabase = async () => {
             waitForConnections: true
         };
 
+        console.log(`DB connection attempt: host=${connectionConfig.host}, port=${connectionConfig.port}, user=${connectionConfig.user}, database=${dbName}, allowCreate=${process.env.DB_ALLOW_CREATE_DATABASE === 'true'}`);
+
         // Connect to the existing database or to the server if database creation is allowed
         if (process.env.DB_ALLOW_CREATE_DATABASE === 'true') {
             connection = await mysql.createConnection(connectionConfig);
