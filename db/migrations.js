@@ -4,25 +4,33 @@ require('dotenv').config();
 const initializeDatabase = async () => {
     let connection;
     try {
-        // Connect without database to create it if needed
-        connection = await mysql.createConnection({
+        const dbName = process.env.DB_NAME || 'github_profile_analyzer';
+        const connectionConfig = {
             host: process.env.DB_HOST || 'localhost',
             port: Number(process.env.DB_PORT || 3306),
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
             waitForConnections: true
-        });
+        };
 
-        const dbName = process.env.DB_NAME || 'github_profile_analyzer';
+        // Connect to the existing database or to the server if database creation is allowed
+        if (process.env.DB_ALLOW_CREATE_DATABASE === 'true') {
+            connection = await mysql.createConnection(connectionConfig);
+            await connection.execute(
+                `CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+            );
+            console.log(`✓ Database '${dbName}' is ready`);
+        } else {
+            connection = await mysql.createConnection({
+                ...connectionConfig,
+                database: dbName
+            });
+        }
 
-        // Create database if not exists
-        await connection.execute(
-            `CREATE DATABASE IF NOT EXISTS ${dbName} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-        );
-        console.log(`✓ Database '${dbName}' is ready`);
-
-        // Switch to the database
-        await connection.changeUser({ database: dbName });
+        // Switch to the database if not already connected
+        if (!connection.config.database) {
+            await connection.changeUser({ database: dbName });
+        }
 
         // Create table if not exists
         await connection.execute(`
@@ -77,7 +85,7 @@ const initializeDatabase = async () => {
         await connection.end();
         return true;
     } catch (error) {
-        console.error('✗ Migration error:', error.message);
+        console.error('✗ Migration error:', error.stack || error);
         if (connection) await connection.end();
         throw error;
     }
