@@ -19,6 +19,13 @@ const port = process.env.PORT || 4000;
 const startServer = async () => {
     try {
         console.log('Initializing database...');
+        console.log('DB config:', {
+            DB_HOST: process.env.DB_HOST || 'undefined',
+            DB_PORT: process.env.DB_PORT || 'undefined',
+            DB_USER: process.env.DB_USER || 'undefined',
+            DB_NAME: process.env.DB_NAME || 'undefined',
+            DB_ALLOW_CREATE_DATABASE: process.env.DB_ALLOW_CREATE_DATABASE || 'undefined'
+        });
         await initializeDatabase();
         console.log('');
         app.listen(port, () => {
